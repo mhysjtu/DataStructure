@@ -1,7 +1,7 @@
-#include "MGraph.h"
+#include "GraphAlgorithm.h"
 #include <stack>
 
-void printGraph(MGraph G){
+void printMGraph(MGraph G){
     for (int i = 0; i < G->Nv; ++i){
         for (int j = 0; j < G->Nv; ++j)
             printf("%d\t", G->G[i][j]);
@@ -13,8 +13,8 @@ int main(int argc, char** argv){
     MGraph G;
     Vertex V;
 
-    G = BuildGraph();
-    printGraph(G);
+    G = BuildMGraph();
+    printMGraph(G);
 
     //DFS
     printf("-----DFS------");

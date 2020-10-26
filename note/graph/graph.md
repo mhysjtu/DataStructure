@@ -374,7 +374,7 @@ void Prim(){
         将V收录进MST:dist[V]=0;
         for(V的每个邻接点W)
             if(dist[W]!=0)//这个顶点不在树里
-                if(E(V,W)<dist[W]){
+                if(E(V,W)<dist[W]){//这一步应该只会把原本INF的变为当前边的权值
                     dist[W]=E(V,W);
                     parent[W] = V;
                 }

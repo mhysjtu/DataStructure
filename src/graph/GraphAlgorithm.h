@@ -1,78 +1,13 @@
-// Adj Matrix
-// Build Graph & DFS & BFS
-#include <stdio.h>
-#include <stdlib.h>
+// DFS & BFS & Dijkstra & Floyd
+#include "Graph.h"
 #include <queue>//for BFS
 
-typedef int Vertex;
-typedef int WeightType;
-#define MaxVertexNum 100
-#define INFINITY 65535
-
-typedef struct GNode *PtrToGNode;
-struct GNode{
-    int Nv, Ne;
-    WeightType G[MaxVertexNum][MaxVertexNum];
-};
-typedef PtrToGNode MGraph;
-
-MGraph CreateGraph(int VertexNum){
-    Vertex V, W;
-    MGraph Graph;
-    Graph = (MGraph)malloc(sizeof(struct GNode));
-    Graph->Ne = 0;
-    Graph->Nv = VertexNum;
-
-    for (V = 0; V < Graph->Nv; ++V){
-        for(W = 0; W < Graph->Nv; ++W){
-            Graph->G[V][W] = INFINITY;
-        }
-    }
-    return Graph;
-}
-
-
-typedef struct ENode *PtrToENode;
-struct ENode{
-    Vertex V1, V2;
-    WeightType Weight;
-};
-typedef PtrToENode Edge;
-
-void InsertEdge(MGraph Graph, Edge E){
-    Graph->G[E->V1][E->V2] = E->Weight;
-    //Graph->G[E->V2][E->V1] = E->Weight;//for unweighted graph
-}
-
-
-MGraph BuildGraph(){
-    MGraph Graph;
-    Edge E;
-    Vertex V;
-    int Nv;
-
-    printf("input the number of vertex:\t");
-    scanf("%d", &Nv);
-    Graph = CreateGraph(Nv);
-    printf("input the number of edge:\t");
-    scanf("%d", &(Graph->Ne));
-    if (Graph->Ne!=0){
-        E = (Edge)malloc(sizeof(struct ENode));
-        for (int i = 0; i < Graph->Ne; ++i){
-            printf("input edge %d: v1 v2 weight:\t", i+1);
-            scanf("%d %d %d", &E->V1, &E->V2, &E->Weight);
-            InsertEdge(Graph, E);
-        }
-    }
-    return Graph;
-}
-
-bool Visited_DFS[MaxVertexNum];
-
+//-------DFS & BFS-------
 void Visit( Vertex V ){
     printf(" %d", V);
 }
 
+bool Visited_DFS[MaxVertexNum];
 void DFS(MGraph Graph, Vertex S, void (*Visit)(Vertex)){
     Visit(S);
     Visited_DFS[S] = true;
@@ -103,9 +38,10 @@ void BFS(MGraph Graph, Vertex S, void (*Visit)(Vertex)){
     }
 }
 
+//-------Dijkstra-------
 Vertex FindMinDist(MGraph Graph, int dist[], int collected[]){
     Vertex MinV, V;
-    int MinDist = INFINITY;
+    WeightType MinDist = INFINITY;
 
     for (V = 0; V < Graph->Nv; ++V)
         if(collected[V]==false && dist[V]<MinDist){
@@ -152,8 +88,8 @@ bool Dijkstra(MGraph Graph, int dist[], int path[], Vertex S){
     return true;
 }
 
-
-//for DCG, bugs found--TBD
+//-------Floyd-------
+//for Directed Cyclic Graph, bugs found--TBD
 bool Floyd(MGraph Graph, WeightType D[][MaxVertexNum], Vertex path[][MaxVertexNum]){
     Vertex i, j, k;
     for (i = 0; i < Graph->Nv; ++i)
@@ -174,8 +110,7 @@ bool Floyd(MGraph Graph, WeightType D[][MaxVertexNum], Vertex path[][MaxVertexNu
         for (i = 0; i < Graph->Nv; ++i)
             for (j = 0; j < Graph->Nv; ++j)
                 if (D[i][k]+ D[k][j] < D[i][j]){
-                    if (k==3)
-                    {
+                    if (k==3){
                         printf("\n %d %d %d \n", D[i][k], D[k][j], D[i][j]);
                         printf("\n %d %d %d \n", k,i,j);
                     }
@@ -185,5 +120,70 @@ bool Floyd(MGraph Graph, WeightType D[][MaxVertexNum], Vertex path[][MaxVertexNu
                     path[i][j] = k;
                 }
     return true;
-    
+}
+
+//-------Minimum Spanning Tree-------
+//-------Prim-------
+Vertex FindMinDist(MGraph Graph, WeightType dist[]){
+    Vertex MinV;
+    WeightType MinDist = INFINITY;
+
+    for (Vertex V = 0; V < Graph->Nv; ++V)
+        if (dist[V]!=0 && dist[V]<MinDist){
+            MinDist = dist[V];
+            MinV = V;
+        }
+    if (MinDist<INFINITY)
+        return MinV;
+    else
+        return -1;    
+}
+
+int Prim(MGraph Graph, LGraph MST){
+    WeightType dist[MaxVertexNum], TotalWeight;
+    Vertex parent[MaxVertexNum], V, W;
+    int VCount;
+    Edge E;
+
+    //初始化
+    for (V = 0; V < Graph->Nv; ++V)
+    {
+        dist[V] = Graph->G[0][V];
+        parent[V] = 0;
+    }
+    TotalWeight = 0;
+    VCount = 0;
+    MST = CreateLGraph(Graph->Nv);
+    E = (Edge)malloc(sizeof(struct ENode));
+
+    //把初始点0加入MST
+    dist[0] = 0;
+    ++VCount;
+    parent[0] = -1;
+
+    while (1){
+        V = FindMinDist(Graph, dist);
+        if (V==-1)
+            break;
+        
+        //将顶点和边加入MST
+        E->V1 = parent[V];
+        E->V2 = V;
+        E->Weight = dist[V];
+        InsertEdge(MST, E);
+        TotalWeight += dist[V];
+        dist[V] = 0;
+        ++VCount;
+        
+        for (W = 0; W < Graph->Nv; ++W)
+            if (dist[W]!=0 && Graph->G[V][W]<INFINITY)
+                if (Graph->G[V][W] < dist[W]){//dist[W]可能有无穷的
+                    dist[W] = Graph->G[V][W];
+                    parent[W] = V;
+                }
+    }
+
+    if (VCount < Graph->Nv)
+        TotalWeight = -1;
+    return TotalWeight;
 }
